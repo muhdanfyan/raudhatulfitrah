@@ -1,0 +1,23 @@
+#!/usr/bin/expect -f
+
+set timeout 120
+set password "Piblajar2020"
+
+spawn ssh pi@210.79.191.137
+expect "password:"
+send "$password\r"
+expect "$ "
+# Check distinct activities from last semester
+send "mysql -u root -p1234567890 pisantri -e \"SELECT DISTINCT aktifitas_keuangan FROM tb_keuangan WHERE tgl_keuangan >= '2025-07-01' ORDER BY aktifitas_keuangan;\"\r"
+expect "$ "
+# Sample transactions
+send "mysql -u root -p1234567890 pisantri -e \"SELECT jenis_keuangan, aktifitas_keuangan, nominal_keuangan, tgl_keuangan FROM tb_keuangan WHERE tgl_keuangan >= '2025-07-01' ORDER BY tgl_keuangan DESC LIMIT 40;\"\r"
+expect "$ "
+# Summary by jenis
+send "mysql -u root -p1234567890 pisantri -e \"SELECT jenis_keuangan, COUNT(*) as total_trx, SUM(nominal_keuangan) as total_nominal FROM tb_keuangan WHERE tgl_keuangan >= '2025-07-01' GROUP BY jenis_keuangan;\"\r"
+expect "$ "
+# Count total records
+send "mysql -u root -p1234567890 pisantri -e \"SELECT COUNT(*) as total FROM tb_keuangan WHERE tgl_keuangan >= '2025-07-01';\"\r"
+expect "$ "
+send "exit\r"
+expect eof

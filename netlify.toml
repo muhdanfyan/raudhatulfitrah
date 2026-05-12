@@ -1,0 +1,38 @@
+[build]
+  publish = "dist"
+  command = "npm run build:pestek"
+
+[context.dev]
+  command = "npm run build:pestek-dev"
+
+# Redirect /daftar and /daftar/ to /ppdb
+[[redirects]]
+  from = "/daftar"
+  to = "/ppdb"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/daftar/"
+  to = "/ppdb"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[edge_functions]]
+  path = "/*"
+  function = "og-screenshot"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

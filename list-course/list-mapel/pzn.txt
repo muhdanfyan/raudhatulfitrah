@@ -1,0 +1,23 @@
+VM304:1 Console was cleared
+VM304:1 	Problem Soft Delete	https://www.youtube.com/watch?v=df3T2uoPMnM&pp=ygUDcHpu	
+VM304:1 	Kenapa API Versioning itu Menyebalkan	https://www.youtube.com/watch?v=IpErJR05Ko8&pp=ygUDcHpu	
+VM304:1 	gRPC vs REST JSON | PZN Reaction	https://www.youtube.com/watch?v=zCA5bKt3awg&pp=ygUDcHpu	
+VM304:1 	PZN shop - PILOT	https://www.youtube.com/watch?v=qB6SO9S2xOg&pp=ygUDcHpu	
+VM304:1 	PZN - Shanteo (Original Mix)	https://www.youtube.com/watch?v=H0YmcVbwCxU&list=RDH0YmcVbwCxU&start_radio=1&pp=ygUDcHpuoAcB	
+VM304:1 	DENOMINASI!!! Gimana Cara Handlenya?	https://www.youtube.com/watch?v=n7A-qb5gSSM&pp=ygUDcHpu	
+VM304:1 	JWT Not Safe?	https://www.youtube.com/watch?v=6hukSEBS6Vw&pp=ygUDcHpu	
+VM304:1 	Optimasi API Menjadi 1500% Lebih Cepat | PZN Reaction	https://www.youtube.com/watch?v=AXwDvYh2-uk&pp=ygUDcHpu0gcJCU0KAYcqIYzv	
+VM304:1 	Over Engineering	https://www.youtube.com/watch?v=g5dc2diprJM&pp=ygUDcHpu	
+VM304:1 	tRPC lebih baik dari JSON API?	https://www.youtube.com/watch?v=1_vY1vsjiAQ&pp=ygUDcHpu	
+VM304:1 	Tidak Mau Pindah Tech Stack	https://www.youtube.com/watch?v=xtFMJJJznP4&pp=ygUDcHpu	
+VM304:1 	Bagaimana Menjadi Backend Developer | PZN Reaction	https://www.youtube.com/watch?v=bl93K8d1ZF4&pp=ygUDcHpu	
+VM304:1 	Bagaimana Grab Memproses Jutaan Order Per Hari | PZN Reaction	https://www.youtube.com/watch?v=e62sEuZTjsM&pp=ygUDcHpu	
+VM304:1 	Bye Bye Docker	https://www.youtube.com/watch?v=S8ZJCxY1uu0&pp=ygUDcHpu	
+VM304:1 	Awas di Hack React Server Component	https://www.youtube.com/watch?v=G-UygClL2tY&pp=ygUDcHpu	
+VM304:1 	Jangan Salah Pilih Index Database | PZN Reaction	https://www.youtube.com/watch?v=yTSCne-kj0k&pp=ygUDcHpu	
+VM304:1 	Jangan pake NestJS	https://www.youtube.com/watch?v=PolLlKjJE6k&pp=ygUDcHpu	
+VM304:1 	Menyimpan Log Kok di Database Sih?	https://www.youtube.com/watch?v=GJZQqxCm3DQ&pp=ygUDcHpu	
+VM304:1 	Rust vs Golang | PZN Reaction	https://www.youtube.com/watch?v=eFhujzaXAfE&pp=ygUDcHpu0gcJCU0KAYcqIYzv	
+VM304:1 	Backend Developer vs Architect	https://www.youtube.com/watch?v=f_xEMBrny1c&pp=ygUDcHpu	
+VM304:1 	Aplikasi Tiba Tiba Lemot dan Mati, Siapa Yang Salah?	https://www.youtube.com/watch?v=5VRgpR73sVA&pp=ygUDcHpu	
+undefined

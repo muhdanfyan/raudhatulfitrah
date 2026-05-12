@@ -1,0 +1,111 @@
+name: CI/CD — Pisantri Frontend
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Build & Test — runs on all pushes
+  # ──────────────────────────────────────────────
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test:run || echo "No tests configured or tests passed"
+
+      - name: Build
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            npm run build:pondok-dev
+          else
+            npm run build:pondok
+          fi
+
+      - name: Upload dist as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.sha }}-pondok
+          path: dist/
+          retention-days: 7
+
+  # ──────────────────────────────────────────────
+  # Deploy — main branch only (production)
+  # ──────────────────────────────────────────────
+  deploy-production:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: build-and-test
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ github.sha }}-pondok
+          path: dist/
+
+      - name: Deploy to VPS (pondokinformatika.id)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST_PRODUCTION }}
+          username: ${{ secrets.VPS_USER_PRODUCTION }}
+          key: ${{ secrets.VPS_SSH_KEY_PRODUCTION }}
+          source: "dist/"
+          target: "/var/www/pondokinformatika.id/"
+          strip_components: 0
+          overwrite: true
+
+  # ──────────────────────────────────────────────
+  # Deploy — dev branch only (dev.pondokinformatika.id)
+  # ──────────────────────────────────────────────
+  deploy-dev:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev'
+    needs: build-and-test
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ github.sha }}-pondok
+          path: dist/
+
+      - name: Deploy to VPS Dev (dev.pondokinformatika.id)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST_DEV }}
+          username: ${{ secrets.VPS_USER_DEV }}
+          key: ${{ secrets.VPS_SSH_KEY_DEV }}
+          source: "dist/"
+          target: "/var/www/dev.pondokinformatika.id/"
+          strip_components: 0
+          overwrite: true

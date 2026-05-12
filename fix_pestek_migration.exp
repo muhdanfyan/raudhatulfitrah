@@ -1,0 +1,36 @@
+#!/usr/bin/expect -f
+
+set timeout 120
+set password "Piblajar2020"
+
+spawn ssh pi@210.79.191.137
+expect "password:"
+send "$password\r"
+expect "$ "
+# Use correct MySQL credentials from .env
+send "mysql -u root -p1234567890 pestek\r"
+expect "mysql>"
+# Disable strict SQL mode temporarily
+send "SET SQL_MODE = '';\r"
+expect "mysql>"
+# Check current column type
+send "SHOW COLUMNS FROM tb_santri LIKE 'program_santri';\r"
+expect "mysql>"
+# Fix invalid date first
+send "UPDATE tb_santri SET tanggal_lahir_santri = '2000-01-01' WHERE tanggal_lahir_santri = '0000-00-00' OR tanggal_lahir_santri IS NULL;\r"
+expect "mysql>"
+# Now alter the column type
+send "ALTER TABLE tb_santri MODIFY COLUMN program_santri ENUM('mondok', 'reguler', 'online', 'afterschool') DEFAULT 'mondok';\r"
+expect "mysql>"
+# Update existing data
+send "UPDATE tb_santri SET program_santri = 'mondok' WHERE program_santri IS NULL OR program_santri = '' OR program_santri = '0';\r"
+expect "mysql>"
+# Verify
+send "SELECT id_santri, nama_lengkap_santri, program_santri FROM tb_santri LIMIT 3;\r"
+expect "mysql>"
+send "SHOW COLUMNS FROM tb_santri LIKE 'program_santri';\r"
+expect "mysql>"
+send "exit\r"
+expect "$ "
+send "exit\r"
+expect eof

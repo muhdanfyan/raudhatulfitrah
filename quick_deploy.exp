@@ -1,0 +1,21 @@
+#!/usr/bin/expect -f
+
+set timeout 180
+set password "Piblajar2020"
+
+spawn ssh pi@210.79.191.137
+expect "password:"
+send "$password\r"
+expect "$ "
+send "cd /home/pi/pisantriv2 && git reset --hard HEAD && git pull origin dev && npm run build && cp -r dist/* /var/www/dev.pondokinformatika.id/\r"
+expect {
+    -re "built in.*s" {
+        expect "$ "
+    }
+    timeout {
+        send "\r"
+        expect "$ "
+    }
+}
+send "exit\r"
+expect eof

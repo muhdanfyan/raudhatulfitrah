@@ -1,0 +1,13 @@
+#!/usr/bin/expect -f
+
+set timeout 60
+set password "Piblajar2020"
+
+spawn ssh pi@210.79.191.137
+expect "password:"
+send "$password\r"
+expect "$ "
+send "echo '$password' | sudo -S chown -R pi:pi /var/www/pisantri/dist && sudo chmod -R 775 /var/www/pisantri/dist\r"
+expect "$ "
+send "exit\r"
+expect eof

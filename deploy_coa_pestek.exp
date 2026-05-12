@@ -1,0 +1,97 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "Piblajar2020"
+
+spawn ssh pi@210.79.191.137
+expect "password:"
+send "$password\r"
+expect "$ "
+
+# 1. Insert Accounts into pestek (Exact same structure)
+send "mysql -u root -p1234567890 pestek << 'EOF'
+-- TRUNCATE just in case to avoid duplicates if rerun
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE tb_akun_keuangan;
+TRUNCATE tb_aktivitas_akun_mapping;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ==== PRIMARY ACCOUNTS ====
+INSERT INTO tb_akun_keuangan (id_akun, kode_akun, nama_akun, tipe_akun, sub_kategori, saldo_normal, deskripsi, parent_akun, is_active, created_at, updated_at) VALUES
+(1, '1000', 'ASET', 'Aset', NULL, 'Debet', 'Parent akun aset', NULL, 1, NOW(), NOW()),
+(7, '2000', 'LIABILITAS', 'Liabilitas', NULL, 'Kredit', 'Parent akun liabilitas', NULL, 1, NOW(), NOW()),
+(10, '3000', 'EKUITAS', 'Ekuitas', NULL, 'Kredit', 'Parent akun ekuitas', NULL, 1, NOW(), NOW()),
+(14, '4000', 'PENDAPATAN', 'Pendapatan', NULL, 'Kredit', 'Parent akun pendapatan', NULL, 1, NOW(), NOW()),
+(19, '5000', 'BEBAN', 'Beban', NULL, 'Debet', 'Parent akun beban', NULL, 1, NOW(), NOW());
+
+-- ==== CHILD ACCOUNTS ====
+INSERT INTO tb_akun_keuangan (id_akun, kode_akun, nama_akun, tipe_akun, sub_kategori, saldo_normal, deskripsi, parent_akun, is_active, created_at, updated_at) VALUES
+(2, '1100', 'Kas', 'Aset', 'Lancar', 'Debet', 'Uang tunai yang dimiliki', 1, 1, NOW(), NOW()),
+(3, '1200', 'Bank', 'Aset', 'Lancar', 'Debet', 'Saldo rekening bank', 1, 1, NOW(), NOW()),
+(4, '1300', 'Peralatan', 'Aset', 'Tetap', 'Debet', 'Aset >Rp 500.000', 1, 1, NOW(), NOW()),
+(5, '1400', 'Perlengkapan', 'Aset', 'Lancar', 'Debet', 'Aset nilai kecil', 1, 1, NOW(), NOW()),
+(6, '1500', 'Kendaraan', 'Aset', 'Tetap', 'Debet', 'Kendaraan operasional', 1, 1, NOW(), NOW()),
+(8, '2100', 'Utang Jangka Pendek', 'Liabilitas', 'Lancar', 'Kredit', 'Jatuh tempo <1 thn', 7, 1, NOW(), NOW()),
+(9, '2200', 'Utang Jangka Panjang', 'Liabilitas', 'Tidak Lancar', 'Kredit', 'Jatuh tempo >1 thn', 7, 1, NOW(), NOW()),
+(11, '3100', 'Dana Awal', 'Ekuitas', 'Modal', 'Kredit', 'Setoran awal', 10, 1, NOW(), NOW()),
+(12, '3200', 'Saldo Awal', 'Ekuitas', 'Modal', 'Kredit', 'Saldo awal periode', 10, 1, NOW(), NOW()),
+(13, '3300', 'Laba Ditahan', 'Ekuitas', 'Laba/Rugi', 'Kredit', 'Akumulasi periode lalu', 10, 1, NOW(), NOW()),
+(15, '4100', 'Donasi', 'Pendapatan', 'Operasional', 'Kredit', 'Sumbangan donatur', 14, 1, NOW(), NOW()),
+(16, '4200', 'Iuran Santri', 'Pendapatan', 'Operasional', 'Kredit', 'Rutin santri', 14, 1, NOW(), NOW()),
+(17, '4300', 'Sumbangan', 'Pendapatan', 'Non-Operasional', 'Kredit', 'Sumbangan non-rutin', 14, 1, NOW(), NOW()),
+(18, '4400', 'Pendapatan Lain-lain', 'Pendapatan', 'Non-Operasional', 'Kredit', 'Kembalian, dll', 14, 1, NOW(), NOW()),
+(20, '5100', 'Beban Makanan & Konsumsi', 'Beban', 'Operasional', 'Debet', 'Lauk, beras, dll', 19, 1, NOW(), NOW()),
+(21, '5200', 'Beban Listrik, Air & Internet', 'Beban', 'Operasional', 'Debet', 'Token, wifi', 19, 1, NOW(), NOW()),
+(22, '5300', 'Beban Transportasi', 'Beban', 'Operasional', 'Debet', 'Bensin, ojek', 19, 1, NOW(), NOW()),
+(23, '5400', 'Beban Kesehatan', 'Beban', 'Operasional', 'Debet', 'Obat-obatan', 19, 1, NOW(), NOW()),
+(24, '5500', 'Beban Pendidikan & Pelatihan', 'Beban', 'Operasional', 'Debet', 'Buku, kursus', 19, 1, NOW(), NOW()),
+(25, '5600', 'Beban Perlengkapan & ATK', 'Beban', 'Operasional', 'Debet', 'Alat kebersihan, ATK', 19, 1, NOW(), NOW()),
+(26, '5700', 'Beban Pemeliharaan & Perbaikan', 'Beban', 'Operasional', 'Debet', 'Servis, laundry', 19, 1, NOW(), NOW()),
+(27, '5800', 'Beban Kegiatan', 'Beban', 'Operasional', 'Debet', 'Acara, tamu', 19, 1, NOW(), NOW()),
+(28, '5900', 'Beban Administrasi & Lainnya', 'Beban', 'Operasional', 'Debet', 'Admin, pulsa', 19, 1, NOW(), NOW()),
+(29, '5910', 'Beban Sewa', 'Beban', 'Operasional', 'Debet', 'Sewa lapangan', 19, 1, NOW(), NOW());
+
+-- ==== KEYWORD MAPPINGS ====
+INSERT INTO tb_aktivitas_akun_mapping (keyword, akun_id, priority, created_at, updated_at) VALUES
+('Donatur', 15, 10, NOW(), NOW()),
+('Donasi', 15, 10, NOW(), NOW()),
+('Yayasan', 15, 10, NOW(), NOW()),
+('Infaq Santri', 16, 10, NOW(), NOW()),
+('SPP', 16, 10, NOW(), NOW()),
+('Sumbangan', 17, 10, NOW(), NOW()),
+('Lauk', 20, 10, NOW(), NOW()),
+('Makan', 20, 10, NOW(), NOW()),
+('Beras', 20, 10, NOW(), NOW()),
+('Sayur', 20, 10, NOW(), NOW()),
+('Listrik', 21, 10, NOW(), NOW()),
+('Token', 21, 10, NOW(), NOW()),
+('Wifi', 21, 10, NOW(), NOW()),
+('Internet', 21, 10, NOW(), NOW()),
+('Bensin', 22, 10, NOW(), NOW()),
+('Ojek', 22, 10, NOW(), NOW()),
+('Transportasi', 22, 10, NOW(), NOW()),
+('Obat', 23, 10, NOW(), NOW()),
+('Kesehatan', 23, 10, NOW(), NOW()),
+('Buku', 24, 10, NOW(), NOW()),
+('Dapur', 25, 10, NOW(), NOW()),
+('Kebersihan', 25, 10, NOW(), NOW()),
+('Servis', 26, 10, NOW(), NOW()),
+('Rapat', 27, 10, NOW(), NOW()),
+('Kegiatan', 27, 10, NOW(), NOW()),
+('Admin', 28, 10, NOW(), NOW()),
+('Sewa', 29, 10, NOW(), NOW());
+
+-- ==== MAPPING DATA LAMA (BY KEYWORD) ====
+UPDATE tb_keuangan SET akun_id = 20 WHERE aktifitas_keuangan REGEXP 'Lauk|Makan|Beras|Sayur|Bumbu|Konsumsi|Ifthar|Sahur';
+UPDATE tb_keuangan SET akun_id = 21 WHERE aktifitas_keuangan REGEXP 'Listrik|Token|Wifi|Internet';
+UPDATE tb_keuangan SET akun_id = 22 WHERE aktifitas_keuangan REGEXP 'Bensin|Ojek|Transport|Ongkos';
+UPDATE tb_keuangan SET akun_id = 25 WHERE aktifitas_keuangan REGEXP 'Kebersihan|Dapur|ATK|Galon|Sampah';
+UPDATE tb_keuangan SET akun_id = 15 WHERE aktifitas_keuangan REGEXP 'Donatur|Donasi|Yayasan';
+UPDATE tb_keuangan SET akun_id = 16 WHERE aktifitas_keuangan REGEXP 'Santri|SPP';
+UPDATE tb_keuangan SET akun_id = 17 WHERE aktifitas_keuangan REGEXP 'Sumbangan|Infak|Sedekah';
+
+EOF
+\r"
+expect "$ "
+send "exit\r"
+expect eof

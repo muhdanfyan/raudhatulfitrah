@@ -1,0 +1,38 @@
+name: Deploy Development (Dev Environment)
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for Development
+        run: npm run build:pondok-dev
+
+      - name: Install sshpass
+        run: sudo apt-get install -y sshpass
+
+      - name: Deploy to VPS Dev
+        env:
+          VPS_PASSWORD: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          if [ -z "$VPS_PASSWORD" ]; then
+            echo "Error: VPS_PASSWORD secret is missing in GitHub Settings."
+            exit 1
+          fi
+          sshpass -p "$VPS_PASSWORD" rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" dist/ pi@210.79.191.137:/var/www/dev.pondokinformatika.id/

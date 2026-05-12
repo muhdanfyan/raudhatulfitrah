@@ -1,0 +1,28 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "Piblajar2020"
+
+spawn ssh pi@210.79.191.137
+expect "password:"
+send "$password\r"
+expect "$ "
+
+# --- DEPLOY DEV ---
+send "cd /var/www/api-dev.pondokinformatika.id && git pull origin dev\r"
+expect "$ "
+send "php artisan migrate --force\r"
+expect "$ "
+send "php artisan optimize:clear\r"
+expect "$ "
+
+# --- DEPLOY PROD ---
+send "cd /var/www/api.pondokinformatika.id && git pull origin main\r"
+expect "$ "
+send "php artisan migrate --force\r"
+expect "$ "
+send "php artisan optimize:clear\r"
+expect "$ "
+
+send "exit\r"
+expect eof

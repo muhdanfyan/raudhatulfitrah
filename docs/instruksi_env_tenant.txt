@@ -1,0 +1,19 @@
+# Instruksi Permission File Env Tenant (VPS)
+
+1. Simpan file env di VPS:
+   /etc/pisantri/tenants/<tenant>.env
+
+2. Set permission agar hanya root yang bisa baca/tulis:
+   sudo chmod 600 /etc/pisantri/tenants/<tenant>.env
+   sudo chown root:root /etc/pisantri/tenants/<tenant>.env
+
+3. Pastikan aplikasi (php-fpm/nginx) bisa membaca file ini (bisa via sudoer/opsi lain jika perlu, default: root only).
+
+4. Jangan pernah commit file ini ke repo!
+
+5. Untuk setiap tenant, buat file env baru sesuai contoh.
+
+# Contoh:
+sudo cp contoh_tenant_env.txt /etc/pisantri/tenants/darulhikmah.env
+sudo chmod 600 /etc/pisantri/tenants/darulhikmah.env
+sudo chown root:root /etc/pisantri/tenants/darulhikmah.env

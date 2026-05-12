@@ -1,0 +1,11 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "Piblajar2020"
+
+spawn scp -r dist pi@210.79.191.137:/var/www/pisantri/
+expect {
+    "yes/no" { send "yes\r"; exp_continue }
+    "password:" { send "$password\r" }
+}
+expect eof

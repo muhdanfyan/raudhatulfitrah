@@ -1,0 +1,21 @@
+# Robots.txt for Pondok Informatika
+# https://pondokinformatika.id
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://pondokinformatika.id/sitemap.xml
+
+# Disallow admin/private areas
+Disallow: /api/
+Disallow: /login
+Disallow: /dashboard
+Disallow: /admin
+
+# Allow crawlers to index public pages
+Allow: /
+Allow: /ppdb
+Allow: /tulisan
+Allow: /penulis
+Allow: /digitalisasi-pesantren

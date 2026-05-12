@@ -1,0 +1,147 @@
+#!/usr/bin/expect -f
+
+set timeout 300
+set password "Piblajar2020"
+
+spawn ssh pi@210.79.191.137
+expect "password:"
+send "$password\r"
+expect "$ "
+
+# Normalize aktivitas_keuangan names
+send "mysql -u root -p1234567890 pisantri << 'EOF'
+
+-- Show current variety
+SELECT 'Before normalization - sample activities:' as status;
+SELECT aktifitas_keuangan, COUNT(*) as cnt FROM tb_keuangan GROUP BY aktifitas_keuangan ORDER BY cnt DESC LIMIT 30;
+
+-- ========================================
+-- NORMALISASI BEBAN MAKANAN & KONSUMSI
+-- ========================================
+
+-- Lauk harian -> 'Belanja Lauk Harian'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Belanja Lauk Harian' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci REGEXP '^Lauk (Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Ahad|Minggu|siang|malam|pagi|santri)';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Belanja Lauk Harian' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Lauk dan %';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Belanja Lauk Harian' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci = 'lauk';
+
+-- Makan -> 'Belanja Konsumsi Harian'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Belanja Konsumsi Harian' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci REGEXP '^makan (siang|malam|pagi)';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Belanja Konsumsi Harian' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Makan Malam %';
+
+-- Ifthar -> 'Konsumsi Ifthar'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Konsumsi Ifthar' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci REGEXP '^(Ifthar|Infthar|ifthar)';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Konsumsi Ifthar' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Uang belanja ifthar%';
+
+-- Sahur -> 'Konsumsi Sahur'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Konsumsi Sahur' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci REGEXP '^Sahur';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Konsumsi Sahur' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE '%Lauk Sahur%';
+
+-- Beli bahan makanan -> 'Belanja Bahan Makanan'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Belanja Bahan Makanan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci REGEXP '^[Bb]eli (beras|minyak|gula|bumbu|cabai|cabe|sayur|telur|ayam|daging|ikan|tahu|tempe)';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Belanja Bahan Makanan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Beli Ikan%';
+
+-- Beli gas -> 'Beli Gas'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Beli Gas' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE '%Beli Gas%';
+
+-- Beli galon -> 'Beli Air Galon'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Beli Air Galon' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE '%Galon%';
+
+-- Konsumsi pengelola/rapat -> 'Konsumsi Pengelola'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Konsumsi Pengelola' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Konsumsi Pengelola%';
+
+-- Snack/kue/gorengan -> 'Belanja Snack'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Belanja Snack' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci REGEXP '(gorengan|snack|kue|roti)';
+
+-- Buah tamu -> 'Konsumsi Tamu'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Konsumsi Tamu' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE '%untuk tamu%';
+
+-- ========================================
+-- NORMALISASI BEBAN UTILITAS
+-- ========================================
+
+-- Token/Listrik -> 'Pembayaran Listrik'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Pembayaran Listrik' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci REGEXP '^(Token Listrik|Bayar.*Listrik|Listrik)';
+
+-- Wifi -> 'Pembayaran Internet'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Pembayaran Internet' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Wifi%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Pembayaran Internet' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE '%Wifi Repeater%';
+
+-- Sampah -> 'Iuran Sampah'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Iuran Sampah' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE '%Sampah%';
+
+-- ========================================
+-- NORMALISASI BEBAN TRANSPORTASI
+-- ========================================
+
+-- Transportasi -> 'Biaya Transportasi'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Biaya Transportasi' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci REGEXP '^(Biaya Transportasi|Ongkos|Transportasi)';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Biaya Transportasi' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Reimburse Transportasi%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Biaya Transportasi' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Transportasi Rapat%';
+
+-- ========================================
+-- NORMALISASI BEBAN PEMELIHARAAN
+-- ========================================
+
+-- Service motor -> 'Service Kendaraan'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Service Kendaraan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci REGEXP '^Service Motor';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Service Kendaraan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Ganti Ban%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Service Kendaraan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE '%Karet Motor%';
+
+-- Service laptop -> 'Service Peralatan'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Service Peralatan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Service Laptop%';
+
+-- ========================================
+-- NORMALISASI BEBAN PENGADAAN
+-- ========================================
+
+-- Pengadaan -> 'Pengadaan [kategori]'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Pengadaan Alat Kebersihan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Pengadaan Alat Kebersihan%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Pengadaan Peralatan Dapur' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Pengadaan Alat Masak%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Pengadaan Peralatan IT' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Pengadaan%Device%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Pengadaan Peralatan IT' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Pengadaan Alat Studio%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Pengadaan Fasilitas Asrama' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Pengadaan%Asrama%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Pengadaan Fasilitas Asrama' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Pengadaan Fasilitas%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Pengadaan Fasilitas Asrama' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Perlengkapan Asrama%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Pengadaan Fasilitas Asrama' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Pengadaan Lemari%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Pengadaan Fasilitas Asrama' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Pengadaan Tempat Sampah%';
+
+-- ========================================
+-- NORMALISASI PENDAPATAN
+-- ========================================
+
+-- Infaq Donatur/Yayasan -> 'Infaq Donatur'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Infaq Donatur' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Infaq Donatur%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Infaq Yayasan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Infaq Yayasan%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Infaq Santri' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Infaq Santri%';
+
+-- Sumbangan personal -> 'Sumbangan Perorangan'
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Sumbangan Perorangan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Dari Kak %';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Sumbangan Perorangan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Dari Bang %';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Sumbangan Perorangan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Dari Pak %';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Sumbangan Perorangan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Dari Ibu %';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Sumbangan Perorangan' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Dari Ust%';
+
+-- ========================================
+-- NORMALISASI KEGIATAN
+-- ========================================
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Rapat Pengelola' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Rapat Pengelola%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Rapat Santri' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Rapat Santri%';
+
+-- ========================================
+-- EKUITAS
+-- ========================================
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Dana Awal Operasional' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE '%DANA AWAL%';
+UPDATE tb_keuangan SET aktifitas_keuangan = 'Saldo Periode Sebelumnya' WHERE aktifitas_keuangan COLLATE utf8mb4_general_ci LIKE 'Saldo tgl%';
+
+-- Show results
+SELECT 'After normalization - sample activities:' as status;
+SELECT aktifitas_keuangan, COUNT(*) as cnt FROM tb_keuangan GROUP BY aktifitas_keuangan ORDER BY cnt DESC LIMIT 30;
+
+-- Count unique activities
+SELECT 'Unique activity count:' as status;
+SELECT COUNT(DISTINCT aktifitas_keuangan) as unique_activities FROM tb_keuangan;
+EOF
+\r"
+expect "$ "
+send "exit\r"
+expect eof

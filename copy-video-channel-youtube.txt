@@ -1,0 +1,17 @@
+Kode 1 : var scroll = setInterval(function(){ window.scrollBy(0, 1000)}, 1000); 
+Kode 2 : window.clearInterval(scroll); console.clear(); urls = $$('a'); urls.forEach(function(v,i,a){if (v.id=="video-title"){console.log('\t'+v.title+'\t'+v.href+'\t')}});
+
+
+
+var scroll = setInterval(function(){ window.scrollBy(0, 1000)}, 1000); 
+window.clearInterval(scroll); console.clear(); urls = $$('a'); urls.forEach(function(v,i,a){if (v.id=="video-title"){console.log('\t'+v.title+'\t'+v.href+'\t')}});
+
+
+script bagus :
+// Contoh untuk YouTube
+let videos = document.querySelectorAll('a#video-title, a.yt-simple-endpoint');
+videos.forEach(v => {
+    if (v.href.includes('/watch')) {
+        console.log(v.innerText.trim() + '\t' + v.href);
+    }
+});
