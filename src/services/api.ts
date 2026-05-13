@@ -19,7 +19,7 @@ const getInferredApiConfig = () => {
   // 2. http://localhost:8000 (Laravel Default)
   // 3. Remote Dev API
   const localApiDefault = 'http://localhost:8000';
-  const inferredApi = isDev ? DEV_API : (isPondok || isPestek ? PROD_API : (isLocal ? (import.meta.env.VITE_API_URL || localApiDefault) : (import.meta.env.VITE_API_URL || DEV_API)));
+  const inferredApi = isDev ? DEV_API : (isPondok || isPestek || isRaudhatulFitrah ? PROD_API : (isLocal ? (import.meta.env.VITE_API_URL || localApiDefault) : (import.meta.env.VITE_API_URL || DEV_API)));
 
   const config = {
     apiBase: inferredApi,
