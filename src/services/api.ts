@@ -1,6 +1,7 @@
 // Smart API Inference: Detect environment from hostname if VITE_API_URL is missing
 const getInferredApiConfig = () => {
   const hostname = window.location.hostname;
+  const isRaudhatulFitrah = hostname.includes('raudhatulfitrah');
   const isPestek = hostname.includes('pesantrenteknologi');
   const isPondok = hostname.includes('pondokinformatika') || hostname.includes('pisantri.online');
   const isDev = hostname.includes('dev.') || hostname.includes('dev--');
@@ -11,7 +12,7 @@ const getInferredApiConfig = () => {
   const DEV_API = 'https://api-dev.pondokinformatika.id';
 
   // Use canonical tenant names consistently
-  const inferredTenant = isPestek ? 'pestek' : 'pondok_informatika';
+  const inferredTenant = isRaudhatulFitrah ? "raudhatulfitrah" : isPestek ? "pestek" : "pondok_informatika";
 
   // Local development fallback priority:
   // 1. VITE_API_URL from .env
