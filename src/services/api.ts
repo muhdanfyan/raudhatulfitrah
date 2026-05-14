@@ -8,7 +8,7 @@ const getInferredApiConfig = () => {
   const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1');
 
   // Hardcoded production defaults
-  const PROD_API = 'https://api.pondokinformatika.id';
+  const PROD_API = 'https://api.pisantri.online';
   const DEV_API = 'https://api-dev.pondokinformatika.id';
 
   // Use canonical tenant names consistently
