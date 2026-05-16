@@ -3,23 +3,27 @@ const getInferredApiConfig = () => {
   const hostname = window.location.hostname;
   const isRaudhatulFitrah = hostname.includes('raudhatulfitrah');
   const isPestek = hostname.includes('pesantrenteknologi');
+  const isTahfizbaubau = hostname.includes('tahfizbaubau') || hostname.includes('almadinah');
   const isPondok = hostname.includes('pondokinformatika') || hostname.includes('pisantri.online');
   const isDev = hostname.includes('dev.') || hostname.includes('dev--');
   const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1');
 
   // Hardcoded production defaults
-  const PROD_API = 'https://api.pisantri.online';
+  const PROD_API_PONDOK = 'https://api.pondokinformatika.id';
+  const PROD_API_SIPONDOK = 'https://api.pisantri.online';
   const DEV_API = 'https://api-dev.pondokinformatika.id';
 
   // Use canonical tenant names consistently
-  const inferredTenant = isRaudhatulFitrah ? "raudhatulfitrah" : isPestek ? "pestek" : "pondok_informatika";
+  const inferredTenant = isTahfizbaubau ? "tahfizbaubau" : isRaudhatulFitrah ? "raudhatulfitrah" : isPestek ? "pestek" : "pondok_informatika";
+
+  // PISAH: pondok tenant pake api.pondokinformatika.id, non-pondok tenant (raudhatul, tahfiz) pake api.pisantri.online
 
   // Local development fallback priority:
   // 1. VITE_API_URL from .env
   // 2. http://localhost:8000 (Laravel Default)
   // 3. Remote Dev API
   const localApiDefault = 'http://localhost:8000';
-  const inferredApi = isDev ? DEV_API : (isPondok || isPestek || isRaudhatulFitrah ? PROD_API : (isLocal ? (import.meta.env.VITE_API_URL || localApiDefault) : (import.meta.env.VITE_API_URL || DEV_API)));
+  const inferredApi = isDev ? DEV_API : (isPondok || isPestek ? PROD_API_PONDOK : (isRaudhatulFitrah || isTahfizbaubau ? PROD_API_SIPONDOK : (isLocal ? (import.meta.env.VITE_API_URL || localApiDefault) : (import.meta.env.VITE_API_URL || DEV_API))));
 
   const config = {
     apiBase: inferredApi,
