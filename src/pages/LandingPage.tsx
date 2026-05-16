@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { api, getPublicHeaders } from '../services/api';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { 
-  GraduationCap, Users, BookOpen, Briefcase, Code, Cpu, 
+import {
+  GraduationCap, Users, BookOpen, Briefcase, Code, Cpu,
   ChevronRight, Play, Star, CheckCircle, ArrowRight,
   Smartphone, Shield, Zap, BarChart3, Award,
   MapPin, Phone, Mail, PenTool, Palette, TrendingUp,
@@ -33,6 +33,14 @@ interface Settings {
   heroSubtitle: string;
   visi: string;
   misi: string;
+  psb_biaya?: string;
+  psb_jadwal?: string;
+  psb_ekskul?: string;
+  psb_beasiswa?: string;
+  psb_kurikulum?: string;
+  psb_keunggulan?: string;
+  psb_tagline?: string;
+  psb_kontak?: string;
 }
 
 interface Konsentrasi {
@@ -153,14 +161,19 @@ const getIconComponent = (iconName: string): any => {
   return iconMap[iconName] || GraduationCap;
 };
 
+// Helper to safely parse JSON strings from settings
+const tryParseJson = (str: string, fallback: any = null): any => {
+  try { return JSON.parse(str); } catch { return fallback; }
+};
+
 // Greeting Section Component with rotation
 function GreetingSection({ greetings }: { greetings: LandingGreeting[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  
+
   useEffect(() => {
     if (greetings.length <= 1) return;
-    
+
     const interval = setInterval(() => {
       setIsAnimating(true);
       setTimeout(() => {
@@ -168,13 +181,13 @@ function GreetingSection({ greetings }: { greetings: LandingGreeting[] }) {
         setIsAnimating(false);
       }, 300);
     }, 8000); // Rotate every 8 seconds
-    
+
     return () => clearInterval(interval);
   }, [greetings.length]);
-  
+
   const current = greetings[currentIndex];
   if (!current) return null;
-  
+
   return (
     <section className="py-12 sm:py-16 bg-white">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -186,7 +199,7 @@ function GreetingSection({ greetings }: { greetings: LandingGreeting[] }) {
             Sambutan <span className="text-amber-600">Pimpinan</span>
           </h2>
         </div>
-        
+
         <div className={`bg-gradient-to-br from-amber-50 via-white to-orange-50 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-lg border border-amber-100 transition-opacity duration-300 ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-center">
             {/* Photo */}
@@ -205,7 +218,7 @@ function GreetingSection({ greetings }: { greetings: LandingGreeting[] }) {
                 <div className="absolute -inset-4 border border-amber-100 rounded-full -z-10"></div>
               </div>
             </div>
-            
+
             {/* Content */}
             <div className="flex-1 text-center lg:text-left">
               <div className="hidden lg:block text-amber-300 mb-4">
@@ -213,10 +226,10 @@ function GreetingSection({ greetings }: { greetings: LandingGreeting[] }) {
                   <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
                 </svg>
               </div>
-              
+
               <div className="text-gray-700 text-base sm:text-lg leading-relaxed mb-6 prose prose-amber max-w-none"
                 dangerouslySetInnerHTML={{ __html: current.greeting_text || '' }} />
-              
+
               <div className="border-t border-amber-200 pt-4">
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{current.nama}</p>
                 <p className="text-amber-600 font-medium">{current.jabatan}</p>
@@ -224,7 +237,7 @@ function GreetingSection({ greetings }: { greetings: LandingGreeting[] }) {
             </div>
           </div>
         </div>
-        
+
         {/* Dots indicator */}
         {greetings.length > 1 && (
           <div className="flex justify-center gap-2 mt-4">
@@ -280,7 +293,7 @@ export default function LandingPage() {
     const interval = setInterval(() => {
       setActiveIndex((prev) => {
         const next = (prev + 1) % konsentrasi.length;
-        
+
         // Scroll logic (without page jump)
         if (scrollRef.current) {
            const container = scrollRef.current;
@@ -310,7 +323,7 @@ export default function LandingPage() {
         api.get('/public/pengurus', { headers: getPublicHeaders() }),
         api.get('/public/landing-data', { headers: getPublicHeaders() })
       ]);
-      
+
       setSettings(settingsData.data || settingsData);
       setKonsentrasi(konsentrasiData || []);
       setTulisan(tulisanData.data || []);
@@ -325,53 +338,27 @@ export default function LandingPage() {
   };
 
   const primaryColor = settings?.warnaUtama || '#2563EB';
+  const hasPsbData = !!settings?.psb_biaya;
+  const tenantId = import.meta.env.VITE_TENANT_ID || 'pondok_informatika';
+  const isPestek = tenantId === 'pestek';
+  const isTahfizbaubau = tenantId === 'tahfizbaubau';
 
-  // Default data (used as fallback if API data is not available)
+  // Parse PSB settings (JSON strings)
+  const psbBiaya = settings?.psb_biaya ? tryParseJson(settings.psb_biaya) : null;
+  const psbJadwal = settings?.psb_jadwal ? tryParseJson(settings.psb_jadwal) : null;
+  const psbEkskul = settings?.psb_ekskul ? tryParseJson(settings.psb_ekskul, []) : [];
+  const psbBeasiswa = settings?.psb_beasiswa ? tryParseJson(settings.psb_beasiswa) : null;
+  const psbKurikulum = settings?.psb_kurikulum ? tryParseJson(settings.psb_kurikulum) : null;
+  const psbKeunggulan = settings?.psb_keunggulan ? tryParseJson(settings.psb_keunggulan, []) : [];
+
+  // Default fallback data when API empty
   const defaultPrograms = [
     { title: 'Tahfidz Quran', desc: 'Program menghafal Al-Quran dengan metode yang efektif dan pendampingan intensif.', icon: BookOpen, category: 'Keagamaan' },
     { title: 'Kajian Kitab', desc: 'Memperdalam ilmu agama melalui kajian kitab-kitab klasik dan kontemporer.', icon: Star, category: 'Keagamaan' },
     { title: 'Entrepreneurship', desc: 'Mengembangkan jiwa wirausaha dan keterampilan bisnis untuk kemandirian santri.', icon: Briefcase, category: 'Kemandirian' },
   ];
 
-  // Tenant-specific data
-  const tenantId = import.meta.env.VITE_TENANT_ID || 'pondok_informatika';
-  const isPestek = tenantId === 'pestek';
-
-  // Pestek Learning Modes - 3 Jurusan
-  const pestekLearningModes = [
-    { 
-      title: "RPL (Rekayasa Perangkat Lunak)", 
-      tag: "Unggulan", 
-      desc: "Pelajari pengembangan software dari dasar hingga mahir. Kuasai pemrograman web, mobile, dan desktop dengan teknologi terkini seperti React, Node.js, dan Laravel.", 
-      target: "Bagi kamu yang suka problem solving dan ingin menjadi Software Developer profesional.", 
-      icon: Code, 
-      color: "from-blue-500 to-indigo-600", 
-      featured: true, 
-      quota: "30 orang" 
-    },
-    { 
-      title: "Multimedia", 
-      tag: "Kreatif", 
-      desc: "Kuasai dunia kreatif digital mulai dari desain grafis, video editing, motion graphics, hingga animasi 2D/3D menggunakan Adobe Suite dan tools profesional lainnya.", 
-      target: "Bagi kamu yang memiliki jiwa seni dan ingin berkarir sebagai Creative Designer.", 
-      icon: Palette, 
-      color: "from-purple-500 to-pink-500", 
-      featured: false, 
-      quota: "25 orang" 
-    },
-    { 
-      title: "TKJ (Teknik Komputer & Jaringan)", 
-      tag: "Teknis", 
-      desc: "Dalami infrastruktur IT, jaringan komputer, server administration, dan cybersecurity. Siap menjadi Network Engineer atau System Administrator.", 
-      target: "Bagi kamu yang tertarik dengan hardware, jaringan, dan keamanan sistem.", 
-      icon: Cpu, 
-      color: "from-emerald-400 to-teal-500", 
-      featured: false, 
-      quota: "25 orang" 
-    }
-  ];
-
-  const defaultLearningModes = isPestek ? pestekLearningModes : [
+  const defaultLearningModes = [
     { title: "Boarding (Mondok)", tag: "Intensif", desc: "Pengalaman belajar dan hidup 24 jam penuh di lingkungan pondok yang Islami dan terstruktur.", target: "Mereka yang ingin fokus 100%, siap hidup mandiri, dan mencari lingkungan Islami.", icon: Home, color: "from-blue-500 to-indigo-600", featured: true, quota: "40 orang" },
     { title: "Non-Boarding (Harian)", tag: "Fleksibel", desc: "Datang ke lokasi pondok pada jam belajar reguler, namun kembali ke rumah setelah selesai.", target: "Mereka yang tinggal dekat dan ingin tetap tinggal bersama keluarga.", icon: Sun, color: "from-amber-400 to-orange-500", featured: false, quota: null },
     { title: "From Home (Jarak Jauh)", tag: "Mandiri", desc: "Pembelajaran penuh secara online (daring) dengan pendampingan mentor virtual.", target: "Mereka yang berada di luar kota atau memiliki keterbatasan mobilitas.", icon: Laptop, color: "from-emerald-400 to-teal-500", featured: false, quota: null },
@@ -382,7 +369,7 @@ export default function LandingPage() {
     { icon: Award, title: 'Full Beasiswa', desc: 'Akses pendidikan IT berkualitas tanpa biaya untuk yatim dan dhuafa berprestasi.' },
     { icon: Briefcase, title: 'Kurikulum Industri', desc: 'Materi pembelajaran yang disusun sesuai kebutuhan dunia kerja dan teknologi terkini.' },
     { icon: Users, title: 'Mentor Praktisi', desc: 'Belajar langsung dari para ahli yang berpengalaman di industri teknologi.' },
-    { icon: Shield, title: 'Lingkungan Islami', desc: 'Pembiasaan adab dan ibadah harian untuk membentuk karakter mulia.' }, 
+    { icon: Shield, title: 'Lingkungan Islami', desc: 'Pembiasaan adab dan ibadah harian untuk membentuk karakter mulia.' },
   ];
 
   const defaultCharacteristics = [
@@ -438,8 +425,12 @@ export default function LandingPage() {
       }))
     : defaultCharacteristics;
 
-  const seoTitle = `${settings?.namaPesantren || 'Pondok Informatika'} - Pesantren IT Gratis Indonesia Timur`;
-  const seoDescription = `${settings?.namaPesantren || 'Pondok Informatika'} adalah pesantren IT gratis yang mengintegrasikan programming, desain grafis, dan agama Islam untuk pemuda Indonesia Timur.`;
+  const seoTitle = settings?.psb_tagline
+    ? `${settings?.namaPesantren || 'PPTQ Al-Madinah Baubau'} - Penerimaan Santri Baru 2026/2027`
+    : `${settings?.namaPesantren || 'Pondok Informatika'} - Pesantren IT Gratis Indonesia Timur`;
+  const seoDescription = settings?.psb_tagline
+    ? `${settings?.namaPesantren || 'PPTQ Al-Madinah Baubau'} menerima santri baru SD-SMP-SMA tahun ajaran 2026/2027. Program boarding dan full day dengan kurikulum nasional dan kaderisasi ulama.`
+    : `${settings?.namaPesantren || 'Pondok Informatika'} adalah pesantren IT gratis yang mengintegrasikan programming, desain grafis, dan agama Islam untuk pemuda Indonesia Timur.`;
 
   if (loading) {
     return (
@@ -452,10 +443,10 @@ export default function LandingPage() {
     );
   }
 
-  const ogImage = isPestek 
-    ? 'https://res.cloudinary.com/dbthxcpdz/image/upload/v1766315039/pestek/branding/og-preview.png'
+  const ogImage = settings?.heroImage
+    ? `https://res.cloudinary.com/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'duntlhjil'}/image/upload/f_auto,q_auto/${import.meta.env.VITE_TENANT_ID || 'pondok_informatika'}/branding/og-image.png`
     : 'https://pondokinformatika.id/images/og-preview.png';
-  
+
   const siteUrl = isPestek ? 'https://pesantrenteknologi.id' : 'https://pondokinformatika.id';
 
   return (
@@ -471,9 +462,9 @@ export default function LandingPage() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:image" content={`https://res.cloudinary.com/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'duntlhjil'}/image/upload,f_auto,q_auto/${import.meta.env.VITE_TENANT_ID || 'pondok_informatika'}/branding/og-image.png`} />
       </Helmet>
-      
+
       <FloatingChatButton />
-      
+
     <main className="min-h-screen bg-white">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm">
@@ -505,82 +496,84 @@ export default function LandingPage() {
       <section id="beranda" className="pt-16 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden min-h-[calc(100vh-64px)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 relative">
           <div className="text-center mb-2" data-aos="fade-down">
-            <span className="inline-block px-4 py-1 bg-primary/10 text-primary-dark rounded-full text-sm font-medium mb-1 sm:mb-2">FOR A BETTER FUTURE</span>
+            <span className="inline-block px-4 py-1 bg-primary/10 text-primary-dark rounded-full text-sm font-medium mb-1 sm:mb-2">{settings?.psb_tagline || (isTahfizbaubau ? 'MELAHIRKAN KADER ULAMA' : 'FOR A BETTER FUTURE')}</span>
           </div>
-          
+
           {/* Mobile Hero Image - Show at top on mobile */}
           <div className="block lg:hidden mb-8" data-aos="zoom-in" data-aos-delay="100">
             <div className="relative mx-auto max-w-md">
               <picture>
-                <img 
-                  src={settings?.heroImage || getStaticAsset('hero-image.png', 'pages')} 
-                  alt={`${settings?.namaPesantren || 'Pesantren IT'} - Welcome`} 
+                <img
+                  src={settings?.heroImage || getStaticAsset('hero-image.png', 'pages')}
+                  alt={`${settings?.namaPesantren || 'Pesantren IT'} - Welcome`}
                   className="w-full object-contain drop-shadow-xl"
                   loading="eager"
                 />
               </picture>
             </div>
           </div>
-          
+
           <div className="grid lg:grid-cols-2 gap-4 lg:gap-8 items-center">
             <div className="text-center lg:text-left">
               {/* Animated Title */}
               <div className="overflow-hidden mb-2 sm:mb-3">
-                <h1 
+                <h1
                   className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight"
-                  data-aos="fade-up" 
+                  data-aos="fade-up"
                   data-aos-delay="100"
                 >
                   <span className="block text-gray-900 mb-2" style={{ animation: 'slideInUp 0.8s ease-out' }}>
                     {(settings?.heroTitle || 'Pondok Informatika: Pesantren IT Modern Indonesia Timur').split(':')[0]}
                   </span>
-                  <span 
+                  <span
                     className="block bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-pulse"
-                    style={{ 
+                    style={{
                       backgroundSize: '200% 200%',
                       animation: 'gradientShift 3s ease infinite, slideInUp 0.8s ease-out 0.2s both'
                     }}
                   >
-                    {(settings?.heroTitle || 'Pondok Informatika: Pesantren IT Modern Indonesia Timur').includes(':') 
+                    {(settings?.heroTitle || 'Pondok Informatika: Pesantren IT Modern Indonesia Timur').includes(':')
                       ? (settings?.heroTitle || 'Pondok Informatika: Pesantren IT Modern Indonesia Timur').split(':')[1]
                       : 'Pesantren IT Modern'}
                   </span>
                 </h1>
               </div>
-              
+
               {/* Animated Subtitle with typing effect style */}
               <div className="relative mb-3 sm:mb-4" data-aos="fade-up" data-aos-delay="200">
                 <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-xl mx-auto lg:mx-0">
                   <span className="inline-block" style={{ animation: 'fadeInWord 0.5s ease-out 0.3s both' }}>
-                    {settings?.heroSubtitle || 'Lembaga pendidikan yang mengintegrasikan teknologi informasi (IT) dan pendidikan agama (Pesantren), bertujuan untuk mencetak generasi IT yang Rabbani. Berbasis di Indonesia Timur, pondok ini menawarkan pendidikan GRATIS bagi pemuda tidak mampu.'}
+                    {settings?.heroSubtitle || (settings?.psb_tagline
+                      ? 'Melahirkan Kader Ulama dan Pemimpin Masa Depan yang berpegang teguh pada Al-Qur\'an dan As-Sunnah, menguasai ilmu syar\'i, dan memiliki keterampilan hidup yang mandiri.'
+                      : 'Lembaga pendidikan yang mengintegrasikan teknologi informasi (IT) dan pendidikan agama (Pesantren), bertujuan untuk mencetak generasi IT yang Rabbani. Berbasis di Indonesia Timur, pondok ini menawarkan pendidikan GRATIS bagi pemuda tidak mampu.')}
                   </span>
                 </p>
                 {/* Decorative line */}
-                <div 
+                <div
                   className="hidden lg:block absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-indigo-500 rounded-full"
                   style={{ animation: 'scaleY 0.8s ease-out 0.5s both', transformOrigin: 'top' }}
                 ></div>
               </div>
-              
+
               {/* Animated Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start" data-aos="fade-up" data-aos-delay="300">
-                <Link 
-                  to="/ppdb" 
+                <Link
+                  to="/ppdb"
                   className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 hover:scale-105 transition-all duration-300"
                 >
                   <GraduationCap className="w-5 h-5 group-hover:animate-bounce" />
                   <span>Daftar Sekarang</span>
 
                 </Link>
-                <a 
-                  href="#tentang" 
+                <a
+                  href="#tentang"
                   className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white/80 backdrop-blur-sm text-gray-800 rounded-xl font-semibold border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-700 transition-all duration-300"
                 >
                   <span>Pelajari Lebih Lanjut</span>
                   <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </a>
               </div>
-              
+
               {/* Floating badges */}
               <div className="hidden lg:flex items-center gap-3 mt-4" data-aos="fade-up" data-aos-delay="400">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-full border border-gray-200 text-sm text-gray-600">
@@ -603,15 +596,15 @@ export default function LandingPage() {
                 {/* Main Image Container with Float Animation */}
                 <div className="relative animate-float">
                   <picture>
-                    <img 
-                      src={settings?.heroImage || getStaticAsset('hero-image.png', 'pages')} 
-                      alt={`${settings?.namaPesantren || 'Pesantren IT'} - Welcome`} 
+                    <img
+                      src={settings?.heroImage || getStaticAsset('hero-image.png', 'pages')}
+                      alt={`${settings?.namaPesantren || 'Pesantren IT'} - Welcome`}
                       className="relative w-full object-contain transition-all duration-700 ease-out group-hover:scale-105 drop-shadow-2xl"
                       loading="eager"
                     />
                   </picture>
                 </div>
-                
+
                 {/* Floating Data Ornaments with Icons */}
                 <div className="absolute -top-4 -right-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl px-4 py-3 shadow-lg shadow-blue-500/30 animate-bounce-slow flex items-center gap-2 border border-white/20" data-aos="zoom-in" data-aos-delay="500">
                   <Users className="w-5 h-5 text-white/90" />
@@ -620,7 +613,7 @@ export default function LandingPage() {
                     <div className="text-[10px] text-blue-100 uppercase tracking-wide">Santri</div>
                   </div>
                 </div>
-                
+
                 <div className="absolute -bottom-3 -left-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl px-4 py-3 shadow-lg shadow-emerald-500/30 animate-float-delayed flex items-center gap-2 border border-white/20" data-aos="zoom-in" data-aos-delay="600">
                   <Briefcase className="w-5 h-5 text-white/90" />
                   <div className="text-white text-center">
@@ -628,7 +621,7 @@ export default function LandingPage() {
                     <div className="text-[10px] text-emerald-100 uppercase tracking-wide">Karya</div>
                   </div>
                 </div>
-                
+
                 <div className="absolute top-1/4 -right-6 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl w-16 h-16 flex flex-col items-center justify-center shadow-lg shadow-purple-500/30 animate-pulse border border-white/20" data-aos="zoom-in" data-aos-delay="700">
                   <BookOpen className="w-5 h-5 text-white/90" />
                   <div className="text-white text-center">
@@ -636,7 +629,7 @@ export default function LandingPage() {
                     <div className="text-[8px] text-purple-100">Kelas</div>
                   </div>
                 </div>
-                
+
                 <div className="absolute bottom-1/4 -left-5 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl w-16 h-16 flex flex-col items-center justify-center shadow-lg shadow-amber-500/30 animate-float border border-white/20" data-aos="zoom-in" data-aos-delay="800">
                   <GraduationCap className="w-5 h-5 text-white/90" />
                   <div className="text-white text-center">
@@ -672,21 +665,21 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5">
             {learningModes.map((mode, index) => (
-              <div 
+              <div
                 key={index}
                 className={`group relative rounded-2xl transition-all duration-300 overflow-hidden ${
-                  mode.featured 
-                    ? 'bg-gradient-to-br from-blue-900 via-indigo-900 to-blue-950 text-white shadow-2xl ring-2 ring-amber-400/50 hover:-translate-y-1' 
+                  mode.featured
+                    ? 'bg-gradient-to-br from-blue-900 via-indigo-900 to-blue-950 text-white shadow-2xl ring-2 ring-amber-400/50 hover:-translate-y-1'
                     : 'bg-white text-gray-900 border border-gray-200 shadow-md hover:shadow-lg hover:-translate-y-0.5'
                 }`}
-                data-aos="fade-up" 
+                data-aos="fade-up"
                 data-aos-delay={index * 50}
               >
                 {/* Golden Glow for Featured */}
                 {mode.featured && (
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 rounded-2xl blur opacity-20 group-hover:opacity-30 transition-opacity"></div>
                 )}
-                
+
                 <div className={`relative p-5 sm:p-6 ${mode.featured ? 'z-10' : ''}`}>
                   {/* Badges for Featured Item */}
                   {mode.featured && (
@@ -701,7 +694,7 @@ export default function LandingPage() {
                       )}
                     </div>
                   )}
-                  
+
                   <div className="flex items-start gap-4">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       mode.featured
@@ -710,7 +703,7 @@ export default function LandingPage() {
                     }`}>
                       <mode.icon className="w-6 h-6" />
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -727,7 +720,7 @@ export default function LandingPage() {
                       <p className={`text-xs sm:text-sm leading-relaxed mb-3 ${mode.featured ? 'text-blue-100/80' : 'text-gray-500'}`}>
                         {mode.desc}
                       </p>
-                      
+
                       <div className={`flex items-center gap-2 pt-3 border-t ${mode.featured ? 'border-white/10' : 'border-gray-100'}`}>
                         <CheckCircle className={`w-4 h-4 flex-shrink-0 ${mode.featured ? 'text-emerald-400' : 'text-green-500'}`} />
                         <p className={`text-xs italic ${mode.featured ? 'text-white/90' : 'text-gray-600'}`}>
@@ -778,9 +771,9 @@ export default function LandingPage() {
               </p>
             </div>
           </div>
-          
+
           {/* Scrolling Container - Draggable */}
-          <div 
+          <div
             className="relative overflow-x-auto cursor-grab active:cursor-grabbing scrollbar-hide"
             onMouseDown={(e) => {
               const el = e.currentTarget;
@@ -801,14 +794,14 @@ export default function LandingPage() {
           >
             <div className="flex gap-4 sm:gap-6 px-4 py-2 w-max">
               {[...pengurus, ...pengurus, ...pengurus].map((p, index) => (
-                <div 
+                <div
                   key={`${p.id_kepengelolaan}-${index}`}
                   className="flex-shrink-0 w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-2xl overflow-hidden relative group cursor-pointer"
                 >
                   {/* Photo */}
                   {p.foto_santri ? (
-                    <img 
-                      src={getStudentPhotoUrl(p.foto_santri)} 
+                    <img
+                      src={getStudentPhotoUrl(p.foto_santri)}
                       alt={p.nama_lengkap_santri}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
@@ -819,7 +812,7 @@ export default function LandingPage() {
                       </span>
                     </div>
                   )}
-                  
+
                   {/* Overlay on Hover */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 sm:p-5">
                     <h3 className="font-bold text-white text-base sm:text-lg mb-1 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
@@ -852,7 +845,7 @@ export default function LandingPage() {
       <section className="py-16 sm:py-24 bg-zinc-50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-blue-100 rounded-bl-full opacity-50 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-1/4 h-1/4 bg-purple-100 rounded-tr-full opacity-50 blur-3xl"></div>
-        
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center mb-12 sm:mb-16" data-aos="fade-up">
             <span className="inline-block px-4 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-xs sm:text-sm font-bold tracking-wide mb-4 shadow-sm">
@@ -868,7 +861,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {characteristics.map((item, index) => (
-              <div 
+              <div
                 key={index}
                 className="group relative bg-white rounded-3xl p-8 hover:shadow-2xl transition-all duration-500 border border-gray-100/50 overflow-hidden hover:-translate-y-2 h-full flex flex-col"
                 data-aos="fade-up"
@@ -876,7 +869,7 @@ export default function LandingPage() {
               >
                 {/* Background Gradient on Hover */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
-                
+
                 {/* Icon */}
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.color} flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform duration-500`}>
                   <item.icon className="w-7 h-7" />
@@ -905,93 +898,215 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Program IT Section */}
+      {/* Program IT Section / Tahfizbaubau PSB Section */}
       <section id="program" className="py-12 sm:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-16">
-            <span className="inline-block text-primary font-bold tracking-wider text-sm mb-2">PILIH DIVISI</span>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 sm:mb-6">Program <span className="text-primary">{settings?.namaSingkat || 'Pondok'}</span></h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Temukan passion teknologimu dan kembangkan potensi terbaik bersama mentor berpengalaman.
-            </p>
-          </div>
-
-          
-          {/* Slider Controls & Container */}
-          <div 
-            className="relative group"
-            onMouseEnter={() => setIsHovering(true)}
-            onMouseLeave={() => setIsHovering(false)}
-          >
-            <div 
-              ref={scrollRef}
-              className="flex overflow-x-auto pb-8 gap-6 mb-8 px-4 sm:px-0 snap-x snap-mandatory scrollbar-hide scroll-smooth"
-              style={{ scrollBehavior: 'smooth' }}
-              onScroll={() => {
-                if (scrollRef.current) {
-                  const scrollLeft = scrollRef.current.scrollLeft;
-                  // Get card width from first child if available, else default to 350
-                  const firstCard = scrollRef.current.children[0] as HTMLElement;
-                  const cardWidth = firstCard ? firstCard.offsetWidth + 24 : 350;
-                  
-                  const index = Math.round(scrollLeft / cardWidth);
-                  if (activeIndex !== index) {
-                    setActiveIndex(index);
-                  }
-                }
-              }}
-            >
-              {[...konsentrasi, ...konsentrasi].map((item, index) => { // Double array for seamless loop simulation if needed, but for simple scroll just original is fine. Let's stick to original for now as requested "bergulir menyamping" usually implies simple carousel first. User said "kembali" which usually implies loop or bounce. Let's do a simple bounce back or infinite scroll effect.
-               // actually, for "infinite" loop seamlessly, we need to duplicate items. 
-               // For this step let's keep it simple: Auto scroll to end, then scroll back to start.
-                const config = konsentrasiConfig[item.nama_konsentrasi] || konsentrasiConfig.default;
-                const IconComponent = config.icon;
-                return (
-                  <div key={`${item.id_konsentrasi}-${index}`} className="flex-shrink-0 w-80 sm:w-96 bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all group/card border border-gray-100 snap-center relative">
-                    <div className={`h-2 sm:h-3 bg-gradient-to-r ${config.color}`}></div>
-                    <div className="p-5 sm:p-8 h-full flex flex-col">
-                      <div className={`w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br ${config.color} rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover/card:scale-110 transition-transform`}>
-                        <IconComponent className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+          {hasPsbData ? (
+            <>
+              {/* PSB Info */}
+              <div className="text-center mb-10 sm:mb-16">
+                <span className="inline-block text-primary font-bold tracking-wider text-sm mb-2">PENERIMAAN SANTRI BARU</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 sm:mb-6">Tahun Ajaran <span className="text-primary">2026/2027</span></h2>
+                <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                  SD - SMP - SMA | Boarding &amp; Full Day
+                </p>
+              </div>
+              {/* Program Cards */}
+              <div className="grid md:grid-cols-4 gap-4 mb-10">
+                <div className="bg-gradient-to-br from-emerald-50 to-green-100 rounded-xl p-6 shadow-lg border-2 border-emerald-400 relative overflow-hidden transform hover:scale-[1.02] transition-all">
+                  <div className="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">UNGGULAN</div>
+                  <div className="text-3xl mb-2">📖</div>
+                  <h3 className="font-bold text-lg text-gray-900 mb-1">Tahfidz (Mondok)</h3>
+                  <p className="text-emerald-600 font-medium text-sm mb-2">Program Unggulan</p>
+                  <p className="text-sm text-gray-600">Target hafalan {psbKurikulum?.tahfidz_target || 'Al-Quran 30 Juz'} dengan metode tahfidz intensif dan murojaah harian.</p>
+                  <div className="mt-3 pt-3 border-t border-emerald-200">
+                    <p className="text-xs text-gray-500">Seluruh jenjang</p>
+                  </div>
+                </div>
+                {['SD', 'SMP', 'SMA'].map((jenjang, i) => {
+                  const colors = [
+                    { border: 'border-blue-100', text: 'text-blue-600', check: 'text-blue-500' },
+                    { border: 'border-purple-100', text: 'text-purple-600', check: 'text-purple-500' },
+                    { border: 'border-amber-100', text: 'text-amber-600', check: 'text-amber-500' },
+                  ];
+                  const emojis = ['🎒', '📚', '🎯'];
+                  return (
+                    <div key={jenjang} className={`bg-white rounded-xl p-6 shadow-md border ${colors[i].border} transform hover:scale-[1.02] transition-all`}>
+                      <div className="text-3xl mb-2">{emojis[i]}</div>
+                      <h3 className="font-bold text-lg text-gray-900 mb-1">{jenjang}</h3>
+                      <p className={`${colors[i].text} font-medium text-sm mb-2`}>{jenjang} {settings?.namaPesantren?.replace('Pondok Pesantren ', '') || 'Tahfidz Al-Madinah'}</p>
+                      <ul className="space-y-1 text-sm text-gray-600">
+                        <li className="flex items-center gap-1.5"><span className={colors[i].check}>✓</span> {jenjang === 'SD' ? (psbKurikulum?.sd?.split('(')[0]?.trim() || 'Kurikulum Nasional') : (psbKurikulum?.smp_sma?.split('(')[0]?.trim() || 'Kaderisasi Ulama')}</li>
+                        <li className="flex items-center gap-1.5"><span className={colors[i].check}>✓</span> Tahfidz Al-Qur'an</li>
+                        <li className="flex items-center gap-1.5"><span className={colors[i].check}>✓</span> Boarding &amp; Full Day</li>
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Kurikulum & Biaya */}
+              <div className="grid md:grid-cols-2 gap-6 mb-10">
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-200">
+                  <h3 className="font-bold text-lg text-gray-900 mb-3">📚 Kurikulum</h3>
+                  <ul className="space-y-2">
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 mt-1">✅</span>
+                      <span><strong>{psbKurikulum?.sd?.split('(')[0]?.trim() || 'Kurikulum Nasional'}</strong> — Untuk jenjang SD</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-emerald-500 mt-1">✅</span>
+                      <span><strong>{psbKurikulum?.smp_sma?.split('(')[0]?.trim() || 'Kaderisasi Ulama'}</strong> — Untuk jenjang SMP-SMA</span>
+                    </li>
+                  </ul>
+                  <div className="mt-4 p-3 bg-white/60 rounded-lg">
+                    <p className="font-semibold text-gray-700">Target Tahfidz:</p>
+                    <p className="text-xl font-bold text-emerald-600">{psbKurikulum?.tahfidz_target || 'Al-Quran 30 Juz'}</p>
+                  </div>
+                </div>
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200">
+                  <h3 className="font-bold text-lg text-gray-900 mb-3">💰 Biaya &amp; Beasiswa</h3>
+                  {psbBiaya && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                        <span className="text-sm text-gray-700">Pendaftaran</span>
+                        <span className="font-semibold text-gray-900">Rp{Number(psbBiaya.pendaftaran).toLocaleString('id-ID')}</span>
                       </div>
-                      <span className="text-xs sm:text-sm text-primary font-medium">Program IT</span>
-                      <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mt-1 mb-2 sm:mb-3">{item.nama_konsentrasi}</h3>
-                      <p className="text-sm sm:text-base text-gray-600 flex-grow">{item.deskripsi_konsentrasi || config.desc}</p>
+                      <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                        <span className="text-sm text-gray-700">Boarding (Asrama)</span>
+                        <span className="font-semibold text-gray-900">Rp{Number(psbBiaya.boarding_total || psbBiaya.boarding_spp + psbBiaya.boarding_makan).toLocaleString('id-ID')}/bln</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                        <span className="text-sm text-gray-700">Full Day (Non-Boarding)</span>
+                        <span className="font-semibold text-gray-900">Rp{Number(psbBiaya.fullday).toLocaleString('id-ID')}/bln</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                        <span className="text-sm text-gray-700">Uang Masuk Boarding</span>
+                        <span className="font-semibold text-gray-900">Rp{Number(psbBiaya.uang_masuk_boarding).toLocaleString('id-ID')}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                        <span className="text-sm text-gray-700">Uang Masuk Full Day</span>
+                        <span className="font-semibold text-gray-900">Rp{Number(psbBiaya.uang_masuk_fullday).toLocaleString('id-ID')}</span>
+                      </div>
+                    </div>
+                  )}
+                  {psbBeasiswa && (
+                    <div className="mt-3 p-2 bg-purple-100/60 rounded-lg">
+                      <p className="text-xs text-purple-700">🎓 {psbBeasiswa.yatim_dhuafa} — {psbBeasiswa.kurang_mampu}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Ekstrakurikuler */}
+              {psbEkskul.length > 0 && (
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200 mb-4">
+                  <h3 className="font-bold text-lg text-gray-900 mb-3">🏅 Ekstrakurikuler</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {psbEkskul.map((item: string) => (
+                      <div key={item} className="flex items-center gap-2 p-2 bg-white/60 rounded-lg">
+                        <span className="text-blue-500">◆</span>
+                        <span className="text-sm text-gray-700">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* Jadwal */}
+              {psbJadwal && (
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+                  <h3 className="font-bold text-lg text-gray-900 mb-3">📅 Jadwal Pendaftaran</h3>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div className="p-3 bg-white/60 rounded-lg">
+                      <p className="text-xs text-gray-500">Pendaftaran</p>
+                      <p className="font-semibold text-gray-800">{psbJadwal.pendaftaran_mulai} – {psbJadwal.pendaftaran_selesai}</p>
+                    </div>
+                    <div className="p-3 bg-white/60 rounded-lg">
+                      <p className="text-xs text-gray-500">Seleksi</p>
+                      <p className="font-semibold text-gray-800">{psbJadwal.seleksi}</p>
+                    </div>
+                    <div className="p-3 bg-white/60 rounded-lg">
+                      <p className="text-xs text-gray-500">Pengumuman</p>
+                      <p className="font-semibold text-gray-800">{psbJadwal.pengumuman}</p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="flex justify-center items-center gap-2 mb-10 sm:mb-16">
-              {konsentrasi.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                     if (scrollRef.current) {
-                       const cardWidth = 320 + 24; // w-80 (320px) + gap-6 (24px) approx
-                       // Better to find the actual element
-                       const container = scrollRef.current;
-                       const cards = container.children;
-                       if (cards[index]) {
-                         (cards[index] as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                       }
-                       setActiveIndex(index);
-                     }
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="text-center mb-10 sm:mb-16">
+                <span className="inline-block text-primary font-bold tracking-wider text-sm mb-2">PILIH DIVISI</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 sm:mb-6">Program <span className="text-primary">{settings?.namaSingkat || 'Pondok'}</span></h2>
+                <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                  Temukan passion teknologimu dan kembangkan potensi terbaik bersama mentor berpengalaman.
+                </p>
+              </div>
+              <div className="relative group"
+                onMouseEnter={() => setIsHovering(true)}
+                onMouseLeave={() => setIsHovering(false)}
+              >
+                <div
+                  ref={scrollRef}
+                  className="flex overflow-x-auto pb-8 gap-6 mb-8 px-4 sm:px-0 snap-x snap-mandatory scrollbar-hide scroll-smooth"
+                  style={{ scrollBehavior: 'smooth' }}
+                  onScroll={() => {
+                    if (scrollRef.current) {
+                      const scrollLeft = scrollRef.current.scrollLeft;
+                      const firstCard = scrollRef.current.children[0] as HTMLElement;
+                      const cardWidth = firstCard ? firstCard.offsetWidth + 24 : 350;
+                      const index = Math.round(scrollLeft / cardWidth);
+                      if (activeIndex !== index) {
+                        setActiveIndex(index);
+                      }
+                    }
                   }}
-                  className={`h-2 rounded-full transition-all duration-500 ${
-                    activeIndex === index 
-                      ? 'w-8 bg-primary' 
-                      : 'w-2 bg-gray-300 hover:bg-gray-400'
-                  }`}
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
-            </div>
-          </div>
+                >
+                  {[...konsentrasi, ...konsentrasi].map((item, index) => {
+                    const config = konsentrasiConfig[item.nama_konsentrasi] || konsentrasiConfig.default;
+                    const IconComponent = config.icon;
+                    return (
+                      <div key={`${item.id_konsentrasi}-${index}`} className="flex-shrink-0 w-80 sm:w-96 bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all group/card border border-gray-100 snap-center relative">
+                        <div className={`h-2 sm:h-3 bg-gradient-to-r ${config.color}`}></div>
+                        <div className="p-5 sm:p-8 h-full flex flex-col">
+                          <div className={`w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br ${config.color} rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover/card:scale-110 transition-transform`}>
+                            <IconComponent className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                          </div>
+                          <span className="text-xs sm:text-sm text-primary font-medium">Program IT</span>
+                          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mt-1 mb-2 sm:mb-3">{item.nama_konsentrasi}</h3>
+                          <p className="text-sm sm:text-base text-gray-600 flex-grow">{item.deskripsi_konsentrasi || config.desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-center items-center gap-2 mb-10 sm:mb-16">
+                  {konsentrasi.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                         if (scrollRef.current) {
+                           const container = scrollRef.current;
+                           const cards = container.children;
+                           if (cards[index]) {
+                             (cards[index] as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                           }
+                           setActiveIndex(index);
+                         }
+                      }}
+                      className={`h-2 rounded-full transition-all duration-500 ${
+                        activeIndex === index
+                          ? 'w-8 bg-primary'
+                          : 'w-2 bg-gray-300 hover:bg-gray-400'
+                      }`}
+                      aria-label={`Go to slide ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
-          {/* Program Keagamaan */}
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+          {/* Program Keunggulan Cards */}
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {programs.map((program, index) => (
               <div key={index} className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl sm:rounded-2xl p-5 sm:p-8 border border-amber-200/60">
                 <span className="text-xs sm:text-sm text-amber-600 font-medium">{program.category}</span>
@@ -1010,11 +1125,11 @@ export default function LandingPage() {
             <div className="order-2 lg:order-1">
               <div className="relative mx-auto max-w-md lg:max-w-none">
                 <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur-lg opacity-30"></div>
-                <img 
-                  src={settings?.aboutImage?.startsWith('http') 
-                    ? settings.aboutImage 
-                    : getStaticAsset('about.webp', 'pages', { width: 800, quality: 85 })} 
-                  alt="Sekolah Modern IT - Pondok Informatika Pesantren IT Indonesia Timur" 
+                <img
+                  src={settings?.aboutImage?.startsWith('http')
+                    ? settings.aboutImage
+                    : getStaticAsset('about.webp', 'pages', { width: 800, quality: 85 })}
+                  alt="Sekolah Modern IT - Pondok Informatika Pesantren IT Indonesia Timur"
                   className="relative rounded-xl sm:rounded-2xl shadow-xl w-full object-cover aspect-[4/3] lg:aspect-auto"
                   loading="lazy"
                   width="598"
@@ -1069,10 +1184,10 @@ export default function LandingPage() {
                 <Star className="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Visi</h3>
-              <div 
+              <div
                 className="text-blue-100 leading-relaxed text-sm sm:text-base prose prose-invert prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ 
-                  __html: settings?.visi || 'Menjadi penghasil SDM IT No. 1 di Indonesia Timur yang terdidik menjadi Generasi IT Rabbani dengan semata-mata mengharap ridho Allah Subhanahu Wa Ta\'ala.' 
+                dangerouslySetInnerHTML={{
+                  __html: settings?.visi || 'Menjadi penghasil SDM IT No. 1 di Indonesia Timur yang terdidik menjadi Generasi IT Rabbani dengan semata-mata mengharap ridho Allah Subhanahu Wa Ta\'ala.'
                 }}
               />
             </div>
@@ -1081,10 +1196,10 @@ export default function LandingPage() {
                 <Award className="w-6 h-6 sm:w-7 sm:h-7" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Misi</h3>
-              <div 
+              <div
                 className="text-amber-100 leading-relaxed text-sm sm:text-base prose prose-invert prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ 
-                  __html: settings?.misi || 'Membina pribadi dengan karakteristik PRIDE (Productive, Rabbani, Intellectual, Discipline, Ethical). Menyejahterakan anggota, umat, dan bangsa. Mengembangkan komunitas IT yang islami.' 
+                dangerouslySetInnerHTML={{
+                  __html: settings?.misi || 'Membina pribadi dengan karakteristik PRIDE (Productive, Rabbani, Intellectual, Discipline, Ethical). Menyejahterakan anggota, umat, dan bangsa. Mengembangkan komunitas IT yang islami.'
                 }}
               />
             </div>
@@ -1179,7 +1294,7 @@ export default function LandingPage() {
                 Lembaga pendidikan yang mengintegrasikan teknologi informasi (IT) dan pendidikan agama (Pesantren).
               </p>
             </div>
-            
+
             <div>
               <h4 className="font-bold text-white mb-3 sm:mb-4 text-sm sm:text-base">Link Cepat</h4>
               <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
@@ -1190,7 +1305,7 @@ export default function LandingPage() {
                 <li><Link to="/login" className="hover:text-white transition-colors">Login</Link></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-bold text-white mb-3 sm:mb-4 text-sm sm:text-base">Kontak</h4>
               <ul className="space-y-2 sm:space-y-3 text-xs sm:text-sm">
@@ -1209,7 +1324,7 @@ export default function LandingPage() {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-800 mt-8 sm:mt-12 pt-6 sm:pt-8 text-center text-gray-500 text-xs sm:text-sm">
             <p>&copy; {new Date().getFullYear()} {settings?.namaPesantren || 'Pondok Informatika'}. All rights reserved.</p>
             <p className="mt-1 sm:mt-2">Powered by <span className="text-primary-light">PISANTRI</span></p>

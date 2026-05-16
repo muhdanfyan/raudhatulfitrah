@@ -13,6 +13,10 @@ const TENANT_CLOUDINARY_CONFIG: Record<string, { cloudName: string; uploadPreset
     cloudName: 'duntlhjil',
     uploadPreset: 'pisantri',
   },
+  'raudhatulfitrah': {
+    cloudName: 'dbthxcpdz',
+    uploadPreset: 'raudhatulfitrah',
+  },
   'pestek': {
     cloudName: 'dbthxcpdz',
     uploadPreset: 'pestek',
@@ -32,12 +36,21 @@ const DEFAULT_CLOUDINARY_CONFIG = {
 // Asset folder types in Cloudinary
 type AssetFolder = 'branding' | 'pages' | 'features';
 
+// Tenant folder mapping: some tenants share the same image folder as another tenant
+// This allows raudhatulfitrah to use pestek's exact images (same URLs)
+const TENANT_FOLDER_MAP: Record<string, string> = {
+  'raudhatulfitrah': 'pestek',
+};
+
 // Helper function to get tenant-specific Cloudinary config
 const getTenantCloudinaryConfig = () => {
   let tenantId = TENANT_ID;
 
   // Map development tenant IDs to their production folder names in Cloudinary
   // (Previously handled pestek-dev, now unified to pestek)
+
+  // Map tenant to shared folder if configured (e.g., raudhatulfitrah uses pestek's images)
+  tenantId = TENANT_FOLDER_MAP[tenantId] || tenantId;
 
   const config = TENANT_CLOUDINARY_CONFIG[TENANT_ID] || DEFAULT_CLOUDINARY_CONFIG;
 

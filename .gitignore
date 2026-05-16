@@ -42,3 +42,4 @@ certs/
 .env.demo
 developer-roadmap-temp/
 .env
+.vercel
